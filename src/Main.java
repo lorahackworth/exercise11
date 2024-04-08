@@ -123,20 +123,45 @@ class HumiditySensor implements WeatherDataSource {
 
 //THIS IS WHAT I CHANGED!
 class PressureSensor implements WeatherDataSource {
+    private double currentPressure;
+    private List<WeatherDataListener> listeners = new ArrayList<>();
+
+    PressureSensor() {
+        updatePressure();
+    }
+
+    public double getCurrentPressure() {
+        return currentPressure;
+    }
+
+    private void updatePressure() {
+        // read from humidity sensor
+        currentPressure = new Random().nextDouble();
+    }
+
 
     @Override
     public void addListener(WeatherDataListener listener) {
-
+        listeners.add(listener);
     }
 
     @Override
     public void removeListener(WeatherDataListener listener) {
-
+        listeners.remove(listener);
     }
 
     @Override
     public void update() {
-
+        System.out.println("PressureSensor: getting new data.");
+        updatePressure();
+        for (WeatherDataListener listener: listeners) {
+            listener.updateData(new WeatherData("humidity", currentPressure) {
+                @Override
+                public String getUpdateMessage() {
+                    return "Humidity updated to " + currentPressure;
+                }
+            });
+        }
     }
 }
 
@@ -174,14 +199,17 @@ public class Main {
 
         TemperatureSensor temperatureSensor = new TemperatureSensor();
         HumiditySensor humiditySensor = new HumiditySensor();
+        PressureSensor pressureSensor = new PressureSensor();
 
         temperatureSensor.addListener(localWeatherStation);
         humiditySensor.addListener(localWeatherStation);
+        pressureSensor.addListener(localWeatherStation);
 
         System.out.println("Main: simulating updates from sensors");
         temperatureSensor.update();
         humiditySensor.update();
         temperatureSensor.update();
+        pressureSensor.update();
 
         System.out.println("Main: displaying report and logs");
         localWeatherStation.displayCurrentWeather();
